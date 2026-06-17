@@ -1,28 +1,23 @@
-import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
-import { isNotFound, isRedirect } from "@tanstack/react-router";
-
-import { renderErrorPage } from "./lib/error-page";
+import { createStart, createCsrfMiddleware } from "@tanstack/react-start";
 
 const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
-});
+  origin: (origin, ctx) => {
+    const requestOrigin = new URL(ctx.request.url).origin;
+    if (origin === requestOrigin) return true;
 
-const errorMiddleware = createMiddleware().server(async ({ next }) => {
-  try {
-    return await next();
-  } catch (error) {
-    if (isNotFound(error) || isRedirect(error)) throw error;
-    if (error != null && typeof error === "object" && "statusCode" in error) {
-      throw error;
-    }
-    console.error(error);
-    return new Response(renderErrorPage(), {
-      status: 500,
-      headers: { "content-type": "text/html; charset=utf-8" },
-    });
-  }
+    const allowed = [
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+      process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : null,
+      process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : null,
+    ].filter(Boolean) as string[];
+
+    return allowed.includes(origin);
+  },
 });
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [csrfMiddleware, errorMiddleware],
+  requestMiddleware: [csrfMiddleware],
 }));

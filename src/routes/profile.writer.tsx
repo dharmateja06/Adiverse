@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, Bookmark, TrendingUp, PenLine, FileEdit } from "lucide-react";
-import { getAllContent } from "@/lib/api/content.functions";
+import { loadAllContent } from "@/lib/api/content.loaders";
 import { ContentCard } from "@/components/ContentCard";
 
 export const Route = createFileRoute("/profile/writer")({
-  loader: () => getAllContent(),
+  loader: ({ context: { queryClient } }) => loadAllContent(queryClient),
   head: () => ({ meta: [{ title: "Writer portfolio — Adiverse" }] }),
   component: WriterProfile,
 });

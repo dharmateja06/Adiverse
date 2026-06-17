@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { getAllContent } from "@/lib/api/content.functions";
+import { loadAllContent } from "@/lib/api/content.loaders";
 import { ContentCard } from "@/components/ContentCard";
 import { ReadingTimeFilter, type IntentFilter } from "@/components/ReadingTimeFilter";
 
 export const Route = createFileRoute("/")({
-  loader: () => getAllContent(),
+  loader: ({ context: { queryClient } }) => loadAllContent(queryClient),
   head: () => ({
     meta: [
       { title: "Adiverse — Where every story finds a home" },

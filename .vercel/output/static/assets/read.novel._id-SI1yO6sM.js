@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-DGeXAQPT.js";var t=e(),n=({error:e})=>(0,t.jsx)(`div`,{className:`p-10 text-center text-destructive`,children:e.message});export{n as errorComponent};

@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { getAllContent } from "@/lib/api/content.functions";
+import { loadAllContent } from "@/lib/api/content.loaders";
 import { ContentCard } from "@/components/ContentCard";
 
 export const Route = createFileRoute("/explore")({
-  loader: () => getAllContent(),
+  loader: ({ context: { queryClient } }) => loadAllContent(queryClient),
   head: () => ({ meta: [{ title: "Explore — Adiverse" }, { name: "description", content: "Browse poems, short stories, and novels." }] }),
   component: Explore,
 });
