@@ -48,6 +48,7 @@ function Write() {
   const [text, setText] = useState("");
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Underline,
