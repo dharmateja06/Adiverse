@@ -1,20 +1,4 @@
-export type ContentType = "poem" | "story" | "novel";
-
-export interface Content {
-  id: string;
-  type: ContentType;
-  title: string;
-  author: string;
-  excerpt: string;
-  genre: string;
-  readTime: number; // minutes
-  views: number;
-  bookmarks: number;
-  tags: string[];
-  cover: string;
-  body?: string;
-  chapters?: { id: string; title: string; body: string }[];
-}
+import type { Content } from "./content.types";
 
 const lorem = `The night unfurled like ink across parchment, and in its quiet she heard the small voice of the world remembering itself. She wrote until the candle bowed, until the words felt less like decisions and more like weather — arriving, departing, leaving the page slightly changed.\n\nMorning came with the discipline of light. There was tea, and the soft architecture of habit. The story, she realized, had been waiting for her to stop performing it.`;
 
@@ -115,4 +99,6 @@ export const CONTENT: Content[] = [
   },
 ];
 
-export const findContent = (id: string) => CONTENT.find((c) => c.id === id);
+export function findContent(id: string) {
+  return CONTENT.find((c) => c.id === id);
+}

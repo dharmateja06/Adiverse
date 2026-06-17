@@ -1,14 +1,19 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Bookmark, Heart, Share2, MessageCircle, Send } from "lucide-react";
 import { useState } from "react";
-import { findContent } from "@/lib/mock-data";
+import { loadContentById } from "@/lib/api/content.loaders";
+import { ReaderPending } from "@/components/ReaderPending";
 
 export const Route = createFileRoute("/read/poem/$id")({
-  loader: ({ params }) => {
-    const c = findContent(params.id);
-    if (!c) throw notFound();
-    return c;
-  },
+  loader: async ({ params, context: { queryClient } }) =>
+    loadContentById(queryClient, params.id, "poem"),
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: `${loaderData?.title ?? "Poem"} — Adiverse` },
+      { name: "description", content: loaderData?.excerpt ?? "Read a poem on Adiverse." },
+    ],
+  }),
+  pendingComponent: ReaderPending,
   component: PoemReader,
   notFoundComponent: () => <div className="p-10 text-center text-muted-foreground">Poem not found.</div>,
   errorComponent: ({ error }) => <div className="p-10 text-center text-destructive">{error.message}</div>,
@@ -45,7 +50,7 @@ function PoemReader() {
 
       <article className="mx-auto mt-14 max-w-xl text-center">
         <pre className="whitespace-pre-wrap font-serif text-xl leading-[2.2] tracking-wide text-foreground">
-{c.body}
+{c.body ?? ""}
         </pre>
       </article>
 
@@ -57,9 +62,8 @@ function PoemReader() {
         ))}
       </div>
 
-      {/* Comments Section */}
       <div className="mt-20 border-t border-border pt-12">
-        <div className="flex items-center gap-2 mb-6">
+        <div className="mb-6 flex items-center gap-2">
           <MessageCircle className="h-5 w-5" />
           <h2 className="text-lg font-semibold">Comments ({comments.length})</h2>
         </div>

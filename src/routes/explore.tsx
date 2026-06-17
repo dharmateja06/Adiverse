@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { CONTENT } from "@/lib/mock-data";
+import { getAllContent } from "@/lib/api/content.functions";
 import { ContentCard } from "@/components/ContentCard";
 
 export const Route = createFileRoute("/explore")({
+  loader: () => getAllContent(),
   head: () => ({ meta: [{ title: "Explore — Adiverse" }, { name: "description", content: "Browse poems, short stories, and novels." }] }),
   component: Explore,
 });
@@ -11,8 +12,9 @@ export const Route = createFileRoute("/explore")({
 const genres = ["All", "Lyric", "Elegy", "Magical Realism", "Literary", "Historical Fiction", "Speculative"];
 
 function Explore() {
+  const content = Route.useLoaderData();
   const [genre, setGenre] = useState("All");
-  const items = genre === "All" ? CONTENT : CONTENT.filter((c) => c.genre === genre);
+  const items = genre === "All" ? content : content.filter((c) => c.genre === genre);
   return (
     <main className="mx-auto max-w-7xl px-4 pb-24 pt-10 sm:px-6">
       <h1 className="font-display text-4xl font-bold sm:text-5xl">Explore</h1>

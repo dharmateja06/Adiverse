@@ -1,14 +1,19 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Clock, MessageCircle, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { findContent } from "@/lib/mock-data";
+import { loadContentById } from "@/lib/api/content.loaders";
+import { ReaderPending } from "@/components/ReaderPending";
 
 export const Route = createFileRoute("/read/story/$id")({
-  loader: ({ params }) => {
-    const c = findContent(params.id);
-    if (!c) throw notFound();
-    return c;
-  },
+  loader: async ({ params, context: { queryClient } }) =>
+    loadContentById(queryClient, params.id, "story"),
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: `${loaderData?.title ?? "Story"} — Adiverse` },
+      { name: "description", content: loaderData?.excerpt ?? "Read a short story on Adiverse." },
+    ],
+  }),
+  pendingComponent: ReaderPending,
   component: StoryReader,
   notFoundComponent: () => <div className="p-10 text-center text-muted-foreground">Story not found.</div>,
   errorComponent: ({ error }) => <div className="p-10 text-center text-destructive">{error.message}</div>,
@@ -47,6 +52,8 @@ function StoryReader() {
     }
   };
 
+  const paragraphs = c.body?.split("\n\n") ?? [];
+
   return (
     <div ref={ref}>
       <div className="fixed left-0 right-0 top-16 z-40 h-0.5 bg-border">
@@ -65,12 +72,11 @@ function StoryReader() {
           </div>
         </header>
         <article className="prose-reading mt-10 space-y-6">
-          {c.body?.split("\n\n").map((p: string, i: number) => <p key={i}>{p}</p>)}
+          {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
         </article>
 
-        {/* Comments Section */}
         <div className="mt-20 border-t border-border pt-12">
-          <div className="flex items-center gap-2 mb-6">
+          <div className="mb-6 flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Comments ({comments.length})</h2>
           </div>

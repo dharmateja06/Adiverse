@@ -1,18 +1,30 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, ChevronLeft, ChevronRight, List, Minus, Plus, X, Bookmark, MessageCircle, Send } from "lucide-react";
 import { useEffect, useState } from "react";
-import { findContent } from "@/lib/mock-data";
+import { loadNovelById } from "@/lib/api/content.loaders";
+import { ReaderPending } from "@/components/ReaderPending";
 
 export const Route = createFileRoute("/read/novel/$id")({
-  loader: ({ params }) => {
-    const c = findContent(params.id);
-    if (!c || !c.chapters) throw notFound();
-    return c;
-  },
+  loader: async ({ params, context: { queryClient } }) =>
+    loadNovelById(queryClient, params.id),
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: `${loaderData?.title ?? "Novel"} — Adiverse` },
+      { name: "description", content: loaderData?.excerpt ?? "Read a novel on Adiverse." },
+    ],
+  }),
+  pendingComponent: ReaderPending,
   component: NovelReader,
   notFoundComponent: () => <div className="p-10 text-center text-muted-foreground">Novel not found.</div>,
   errorComponent: ({ error }) => <div className="p-10 text-center text-destructive">{error.message}</div>,
 });
+
+function readSavedChapterIndex(storageKey: string, chapterCount: number) {
+  if (typeof window === "undefined") return 0;
+  const saved = Number(localStorage.getItem(storageKey));
+  if (!Number.isNaN(saved) && saved >= 0 && saved < chapterCount) return saved;
+  return 0;
+}
 
 function NovelReader() {
   const c = Route.useLoaderData();
@@ -25,8 +37,7 @@ function NovelReader() {
   const [commentText, setCommentText] = useState("");
 
   useEffect(() => {
-    const saved = Number(localStorage.getItem(storageKey));
-    if (!Number.isNaN(saved) && saved > 0 && saved < chapters.length) setIdx(saved);
+    setIdx(readSavedChapterIndex(storageKey, chapters.length));
   }, [storageKey, chapters.length]);
 
   useEffect(() => {
@@ -34,7 +45,7 @@ function NovelReader() {
     window.scrollTo({ top: 0 });
   }, [idx, storageKey]);
 
-  const ch = chapters[idx];
+  const ch = chapters[idx]!;
 
   const handleAddComment = () => {
     if (commentText.trim()) {
@@ -64,7 +75,7 @@ function NovelReader() {
         </div>
         {tocOpen && (
           <div className="h-[calc(100%-3rem)] overflow-y-auto p-2">
-            {chapters.map((c2: { id: string; title: string; body: string }, i: number) => (
+            {chapters.map((c2, i) => (
               <button
                 key={c2.id}
                 onClick={() => setIdx(i)}
@@ -97,7 +108,7 @@ function NovelReader() {
           <h1 className="mt-3 font-display text-4xl font-bold leading-tight">{ch.title}</h1>
           <div className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground"><Bookmark className="h-3 w-3" /> Auto-bookmarked</div>
           <div className="mt-8 space-y-6 font-serif leading-[1.9]" style={{ fontSize }}>
-            {ch.body.split("\n\n").map((p: string, i: number) => <p key={i}>{p}</p>)}
+            {ch.body.split("\n\n").map((p, i) => <p key={i}>{p}</p>)}
           </div>
         </article>
 
@@ -119,9 +130,8 @@ function NovelReader() {
           </button>
         </nav>
 
-        {/* Comments Section */}
         <div className="mx-auto mt-20 max-w-2xl">
-          <div className="flex items-center gap-2 mb-6">
+          <div className="mb-6 flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Comments ({comments.length})</h2>
           </div>

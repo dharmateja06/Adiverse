@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { CONTENT } from "@/lib/mock-data";
+import { getAllContent } from "@/lib/api/content.functions";
 import { ContentCard } from "@/components/ContentCard";
 import { ReadingTimeFilter, type IntentFilter } from "@/components/ReadingTimeFilter";
 
 export const Route = createFileRoute("/")({
+  loader: () => getAllContent(),
   head: () => ({
     meta: [
       { title: "Adiverse — Where every story finds a home" },
@@ -19,10 +20,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const content = Route.useLoaderData();
   const [filter, setFilter] = useState<IntentFilter>("all");
   const items = useMemo(
-    () => (filter === "all" ? CONTENT : CONTENT.filter((c) => c.type === filter)),
-    [filter],
+    () => (filter === "all" ? content : content.filter((c) => c.type === filter)),
+    [content, filter],
   );
   const featured = items[0];
   const rest = items.slice(1);

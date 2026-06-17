@@ -1,7 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { Color } from "@tiptap/extension-color";
+import Highlight from "@tiptap/extension-highlight";
+import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
+import TextAlign from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Underline from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { useMemo, useState } from "react";
 import {
-  Bold, Italic, Underline, Strikethrough,
+  Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   AlignLeft, AlignCenter, AlignRight,
   List, ListOrdered, Quote, Link as LinkIcon,
   Highlighter, Palette, Save, Eye, FileText, Clock, Hash,
@@ -29,12 +38,7 @@ const CANVASES = [
 const HIGHLIGHTS = ["transparent", "#fff59d", "#ffcc80", "#b2ebf2", "#c5e1a5", "#f48fb1"];
 const COLORS = ["inherit", "#1a1a2a", "#5b3a91", "#9a3412", "#1d4ed8", "#047857"];
 
-function exec(cmd: string, val?: string) {
-  document.execCommand(cmd, false, val);
-}
-
 function Write() {
-  const editorRef = useRef<HTMLDivElement>(null);
   const [title, setTitle] = useState("Untitled");
   const [type, setType] = useState<"poem" | "story" | "novel">("story");
   const [font, setFont] = useState(FONTS[0].value);
@@ -43,17 +47,34 @@ function Write() {
   const [canvas, setCanvas] = useState(CANVASES[0]);
   const [text, setText] = useState("");
 
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Highlight.configure({ multicolor: true }),
+      TextStyle,
+      Color,
+      Link.configure({ openOnClick: false }),
+      Placeholder.configure({ placeholder: "Begin where the silence ends…" }),
+    ],
+    content: "",
+    onUpdate: ({ editor: ed }) => setText(ed.getText()),
+    editorProps: {
+      attributes: {
+        class:
+          "outline-none min-h-[40vh] [&_blockquote]:border-l-4 [&_blockquote]:border-current/20 [&_blockquote]:pl-4 [&_blockquote]:italic [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6",
+      },
+    },
+  });
+
   const stats = useMemo(() => {
-    const plain = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const plain = text.replace(/\s+/g, " ").trim();
     const words = plain ? plain.split(" ").length : 0;
     const chars = plain.length;
     const minutes = Math.max(1, Math.round(words / 200));
     return { words, chars, minutes };
   }, [text]);
-
-  const onInput = () => {
-    if (editorRef.current) setText(editorRef.current.innerHTML);
-  };
 
   const Btn = ({ onClick, children, title }: { onClick: () => void; children: React.ReactNode; title: string }) => (
     <button
@@ -106,22 +127,28 @@ function Write() {
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-1 border-b border-border bg-background/50 px-3 py-2">
-            <Btn title="Bold" onClick={() => exec("bold")}><Bold className="h-4 w-4" /></Btn>
-            <Btn title="Italic" onClick={() => exec("italic")}><Italic className="h-4 w-4" /></Btn>
-            <Btn title="Underline" onClick={() => exec("underline")}><Underline className="h-4 w-4" /></Btn>
-            <Btn title="Strikethrough" onClick={() => exec("strikeThrough")}><Strikethrough className="h-4 w-4" /></Btn>
+            <Btn title="Bold" onClick={() => editor?.chain().focus().toggleBold().run()}><Bold className="h-4 w-4" /></Btn>
+            <Btn title="Italic" onClick={() => editor?.chain().focus().toggleItalic().run()}><Italic className="h-4 w-4" /></Btn>
+            <Btn title="Underline" onClick={() => editor?.chain().focus().toggleUnderline().run()}><UnderlineIcon className="h-4 w-4" /></Btn>
+            <Btn title="Strikethrough" onClick={() => editor?.chain().focus().toggleStrike().run()}><Strikethrough className="h-4 w-4" /></Btn>
             <Sep />
-            <Btn title="Align left" onClick={() => exec("justifyLeft")}><AlignLeft className="h-4 w-4" /></Btn>
-            <Btn title="Align center" onClick={() => exec("justifyCenter")}><AlignCenter className="h-4 w-4" /></Btn>
-            <Btn title="Align right" onClick={() => exec("justifyRight")}><AlignRight className="h-4 w-4" /></Btn>
+            <Btn title="Align left" onClick={() => editor?.chain().focus().setTextAlign("left").run()}><AlignLeft className="h-4 w-4" /></Btn>
+            <Btn title="Align center" onClick={() => editor?.chain().focus().setTextAlign("center").run()}><AlignCenter className="h-4 w-4" /></Btn>
+            <Btn title="Align right" onClick={() => editor?.chain().focus().setTextAlign("right").run()}><AlignRight className="h-4 w-4" /></Btn>
             <Sep />
-            <Btn title="Bulleted list" onClick={() => exec("insertUnorderedList")}><List className="h-4 w-4" /></Btn>
-            <Btn title="Numbered list" onClick={() => exec("insertOrderedList")}><ListOrdered className="h-4 w-4" /></Btn>
-            <Btn title="Quote" onClick={() => exec("formatBlock", "blockquote")}><Quote className="h-4 w-4" /></Btn>
-            <Btn title="Link" onClick={() => {
-              const url = prompt("Link URL");
-              if (url) exec("createLink", url);
-            }}><LinkIcon className="h-4 w-4" /></Btn>
+            <Btn title="Bulleted list" onClick={() => editor?.chain().focus().toggleBulletList().run()}><List className="h-4 w-4" /></Btn>
+            <Btn title="Numbered list" onClick={() => editor?.chain().focus().toggleOrderedList().run()}><ListOrdered className="h-4 w-4" /></Btn>
+            <Btn title="Quote" onClick={() => editor?.chain().focus().toggleBlockquote().run()}><Quote className="h-4 w-4" /></Btn>
+            <Btn
+              title="Link"
+              onClick={() => {
+                const url = prompt("Link URL");
+                if (!url) return;
+                editor?.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+              }}
+            >
+              <LinkIcon className="h-4 w-4" />
+            </Btn>
             <Sep />
             <select
               value={font}
@@ -151,7 +178,13 @@ function Write() {
                 <button
                   key={c}
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => exec("hiliteColor", c)}
+                  onClick={() => {
+                    if (c === "transparent") {
+                      editor?.chain().focus().unsetHighlight().run();
+                    } else {
+                      editor?.chain().focus().toggleHighlight({ color: c }).run();
+                    }
+                  }}
                   className="h-5 w-5 rounded border border-border"
                   style={{ background: c === "transparent" ? "repeating-linear-gradient(45deg,#0001,#0001 3px,transparent 3px,transparent 6px)" : c }}
                   title={c}
@@ -165,7 +198,13 @@ function Write() {
                 <button
                   key={c}
                   onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => exec("foreColor", c)}
+                  onClick={() => {
+                    if (c === "inherit") {
+                      editor?.chain().focus().unsetColor().run();
+                    } else {
+                      editor?.chain().focus().setColor(c).run();
+                    }
+                  }}
                   className="h-5 w-5 rounded-full border border-border"
                   style={{ background: c === "inherit" ? "conic-gradient(red,orange,yellow,green,blue,purple,red)" : c }}
                 />
@@ -179,14 +218,11 @@ function Write() {
             style={{ background: canvas.bg, color: canvas.fg }}
           >
             <div
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={onInput}
-              className="mx-auto max-w-3xl outline-none [&_blockquote]:border-l-4 [&_blockquote]:border-current/20 [&_blockquote]:pl-4 [&_blockquote]:italic [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+              className="mx-auto max-w-3xl write-editor"
               style={{ fontFamily: font, fontSize, lineHeight }}
-              data-placeholder="Begin where the silence ends…"
-            />
+            >
+              <EditorContent editor={editor} />
+            </div>
           </div>
         </div>
 

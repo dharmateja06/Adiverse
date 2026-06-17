@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Eye, Bookmark, Clock } from "lucide-react";
-import type { Content } from "@/lib/mock-data";
+import type { Content } from "@/lib/content.types";
 
 const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 

@@ -1,14 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bookmark, History, Heart, ListMusic } from "lucide-react";
-import { CONTENT } from "@/lib/mock-data";
+import { getAllContent } from "@/lib/api/content.functions";
 import { ContentCard } from "@/components/ContentCard";
 
 export const Route = createFileRoute("/profile/reader")({
+  loader: () => getAllContent(),
   head: () => ({ meta: [{ title: "Reader profile — Adiverse" }] }),
   component: ReaderProfile,
 });
 
 function ReaderProfile() {
+  const content = Route.useLoaderData();
   return (
     <main className="mx-auto max-w-7xl px-4 pb-24 pt-10 sm:px-6">
       <div className="flex flex-wrap items-center gap-6 rounded-3xl border border-border bg-card p-8">
@@ -37,12 +39,12 @@ function ReaderProfile() {
 
       <h2 className="mt-12 font-display text-2xl font-bold">Continue reading</h2>
       <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {CONTENT.slice(0, 3).map((c) => <ContentCard key={c.id} c={c} />)}
+        {content.slice(0, 3).map((c) => <ContentCard key={c.id} c={c} />)}
       </div>
 
       <h2 className="mt-12 font-display text-2xl font-bold">Your bookmarks</h2>
       <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {CONTENT.slice(2, 5).map((c) => <ContentCard key={c.id} c={c} />)}
+        {content.slice(2, 5).map((c) => <ContentCard key={c.id} c={c} />)}
       </div>
     </main>
   );

@@ -1,15 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, Bookmark, TrendingUp, PenLine, FileEdit } from "lucide-react";
-import { CONTENT } from "@/lib/mock-data";
+import { getAllContent } from "@/lib/api/content.functions";
 import { ContentCard } from "@/components/ContentCard";
 
 export const Route = createFileRoute("/profile/writer")({
+  loader: () => getAllContent(),
   head: () => ({ meta: [{ title: "Writer portfolio — Adiverse" }] }),
   component: WriterProfile,
 });
 
 function WriterProfile() {
-  const published = CONTENT.slice(0, 4);
+  const content = Route.useLoaderData();
+  const published = content.slice(0, 4);
   return (
     <main className="mx-auto max-w-7xl px-4 pb-24 pt-10 sm:px-6">
       <div className="flex flex-wrap items-center gap-6 rounded-3xl border border-border bg-card p-8">
